@@ -3,6 +3,7 @@
 <link rel="import" href="../neon-animation/neon-animation.html">
 <link rel="import" href="../neon-animation/neon-animations.html">
 
+<link rel="import" href="fill-inout-animation.html">
 <link rel="import" href="d3-import.html">
 <link rel="import" href="wid-hex-tile.html">
 <link rel="import" href="wid-tiles-store.html">
@@ -61,7 +62,7 @@ Example:
               color="[[hex.color]]"
               width="[[tileWidth]]"
               height="[[tileHeight]]"
-              is-skill="[[hex.isPlain]]">
+              is-plain="[[hex.isPlain]]">
 
               <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
               <span>[[hex.name]]</span>
@@ -111,6 +112,25 @@ Example:
     ],
 
     properties: {
+      /**
+       * Enable/Disable the tile ripple animation.
+       * @type {Boolean}
+       */
+      withRipple: {
+        type: Boolean,
+        value: false
+      },
+
+      tileAnimatable: {
+        type: Boolean,
+        value: true
+      },
+
+      tileAnimatableType: {
+        type: String,
+        value: 'fade-out'
+      },
+
       currentTile: {
         type: Object,
         notify: true
@@ -224,8 +244,8 @@ Example:
       rippleColorPicker: {
         type: Object,
         value: function () {
-          return function(index) {
-            return this.rippleColors[index % this.rippleColors.length];
+          return function(radius) {
+            return this.rippleColors[radius % this.rippleColors.length];
           };
         }
       },
@@ -245,9 +265,9 @@ Example:
     listeners: {
       'dom-change': '_onDomChange',
       'iron-resize': '_onIronResize',
-      'tile-skill': '_onTileSkill',
-      'tile-empty': '_onTileEmpty',
-      'neon-animation-finish': '_onNeonAnimationFinish'
+      'neon-animation-finish': '_onNeonAnimationFinish',
+      'hex-tile-tap-plain': '_onPlainTileTap',
+      'hex-tile-tap-empty': '_onEmptyTileTap'
     },
 
     observers: [
@@ -425,7 +445,7 @@ Example:
             emptiesBetweenPlain: gridParamters.emptiesBetweenPlain
           }) && (currentTile < this.tiles.length)) {
 
-            //workaround if the number total of tiles equal the number of plain tiles to insert
+            //workaround if the number total of tiles equals the number of plain tiles to insert
             tilesSinceLastPlain = (gridParamters.emptiesBetweenPlain === 1) ? 1 : 0; 
             row.push(this._computePlainTileModel(this.tiles[currentTile], {
               i: i,
@@ -454,82 +474,118 @@ Example:
       return this._tilesModel;
     },
 
+    /**
+     * Configure the tile ripple animation. This animation is not configurable.
+     * This ripple propagates through tile's neighbors.
+     * It could only be enabled or disabled.
+     * @param  {HexTileEvent} e An event emitted by a wid-hex-tile
+     */
     _configureRipple: function (e) {
       var store = this.$.store,
           i = e.detail.i,
           j = e.detail.j,
           tile = store.getTileIJ(i, j),
-          ui,
           animationConfig = this.animationConfig['tile-ripple'] = [],
-          nodes, cpt = 0;
-      while ((nodes = tile.getRing(cpt)).length) {
+          nodes, radius = 0,
+          getSVGPath = function (t) {
+            return t.$.hexagon;
+          };
 
-        ui = nodes.map(function (t) {
-          return t._SVGHexagonPath;
-        });
-
-        nodes.forEach(function (t) {
-          t.disableLink();
-        });
+      while ((nodes = tile.getRing(radius)).length) {
 
         animationConfig.push({
           name: 'cascaded-animation',
-          animation: 'fill-blink-animation',
-          color: this.rippleColorPicker(cpt),
-          nodes: ui,
+          animation: 'fill-inout-animation',
+          color: this.rippleColorPicker(radius),
+          nodes: nodes.map(getSVGPath),
           nodeDelay: 1,
           timing: {
-            delay: 50 * cpt,
+            delay: 50 * radius,
             duration: 300
           }
         });
-        cpt++;
+        radius++;
+
       }
-
-      return cpt;
     },
 
-    _onTileEmpty: function (e) {
-      this.async(function() {
-        this._configureRipple(e);
-        this.playAnimation('tile-ripple');
-      });
+    /**
+     * Configure and trigger the ripple animation if enabled.
+     * Disable the tiles event during the animation.
+     * @param  {TileTapEvent} e Tile Tap Event. 
+     */
+    _onEmptyTileTap: function (e) {
+      if (this.withRipple) {
+        this.async(function() {
+          this._configureRipple(e);
+          this._disableTilesEvent();
+          this.playAnimation('tile-ripple');
+        });
+      }
     },
 
-    _onTileSkill: function(e) {
+    /**
+     * Enable the tiles event once the tile-ripple animation is finished.
+     */
+    _onNeonAnimationFinish: function() {
+      this._enableTilesEvent();
+    },
+
+    /**
+     * Configure and trigger the ripple animation if enabled.
+     * Set the current selected tile.
+     * Update the exit animation to call the tile fade-out animation.
+     * @param  {TileTapEvent} e Tile Tap Event. 
+     */
+    _onPlainTileTap: function(e) {
+      this._onEmptyTileTap(e);
+      
       this.currentTile = e.target;
-      this.currentTile.hide();
-
-      this.async(function() {
-        this._configureRipple(e);
-        this.playAnimation('tile-ripple');
-      });
-
       this.sharedElements = {
         'hero': e.target
       };
-      this._updateExitAnimation(e.target);
+
+      if (this.tileAnimatable) {
+        this._updateExitAnimation(this.currentTile);
+      }
     },
 
+    /**
+     * Disable all tiles events.
+     */
+    _disableTilesEvent: function () {
+      this._tiles.forEach(function (t) {
+        t.disableEvent();
+      });
+    },
+
+    /**
+     * Enable all tiles events.
+     */
+    _enableTilesEvent: function () {
+      this._tiles.forEach(function (t) {
+        t.enableEvent();
+      });
+    },
+
+    /**
+     * Call the fade-out animation of the tile element.
+     * @param  {Tile} tile Tile element with a fade-out animation.
+     */
     _updateExitAnimation: function (tile) {
       this.animationConfig.exit = [this.animationConfig.exit[0]].concat({
         animatable: tile,
-        type: 'fade-out'
+        type: this.tileAnimatableType
       });
     },
-
-    _onNeonAnimationFinish: function() {
-      this._tiles.forEach(function (t) {
-        t.enableLink();
-      });
-    },
+    
 
     /**
      * This function cache the DOM nodes into the the tiles Store.
      */
     _onDomChange: function() {
       var store = this.$.store,
-          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('app-skill-tile');
+          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('wid-hex-tile');
 
       tiles.forEach(function (tile) {
         store.addTile(tile);

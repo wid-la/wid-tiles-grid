@@ -29,12 +29,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <template is="dom-bind" id="app">
       <wid-hex-grid
-        tiles="[[tiles]]">
+        id="grid"
+        tiles="[[tiles]]"
+        with-ripple
+        on-hex-tile-tap-plain="_onTileSkill">
       </wid-hex-grid>
     </template>
 
     <script>
       var app = document.querySelector('#app');
+
+      app._onTileSkill = function (e) {
+        console.log('hex-tile-tap-plain', e);
+      };
 
       app.width = 1000;
       app.height = 400;

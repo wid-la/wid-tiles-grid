@@ -6,6 +6,27 @@
 <link rel="import" href="d3-import.html">
 <link rel="import" href="wid-tiles-store.html">
 
+<!--
+An element that display a hexagonal tiles. 
+
+Example:
+
+```
+  <wid-hex-tile
+    color="blue"
+    width="125"
+    height="125">
+
+    <span>Hello World!</span>
+
+  </wid-hex-tile>
+```
+
+@group Wid
+@element wid-hex-tile
+@demo demo/index.html
+@hero hero.svg
+-->
 <dom-module id="wid-hex-tile">
   <style>
 
@@ -74,7 +95,7 @@
     [+1, -1, 0], [+1, 0, -1], [0, +1, -1],
     [-1, +1, 0], [-1, 0, +1], [0, -1, +1]
   ];  
-   
+
   Polymer({
     is: 'wid-hex-tile',
 
@@ -146,7 +167,7 @@
         value: 1
       },
 
-      isSkill: {
+      isPlain: {
         type: Boolean
       },
 
@@ -155,17 +176,9 @@
         observer: '_marginTopChanged'
       },
 
-      isEmpty: {
+      isFake: {
         type: Boolean,
         value: false
-      },
-
-      _SVGHexagonPath: {
-        value: Object
-      },
-
-      _store: {
-        type: Object
       },
 
       route: {
@@ -177,6 +190,10 @@
       tap: '_onTap'
     },
 
+    /**
+     * Create the svg hexagon with d3 based on the width, the height, the margin
+     * and the color of the component.
+     */
     attached: function() {
       var width = (Math.sqrt(3) / 2) * this.width,
           radius = (this.width + this.height) / 4;
@@ -203,17 +220,16 @@
       Polymer.dom(this.$.tile).insertBefore(svg.node(), this.$.anchor);
 
       //optimization
-      this._SVGHexagonPath = this.$$('path');
-      this._store = this.$.store;
+      this.$.hexagon = this.$$('#hexagon');
     },
 
     /**
      * Get all 6 neighbors.
-     * @return {array<Tile>}
+     * @return {[Tile]}
      */
     getNeighbors: function () {
       if (!this._neighbors) {
-        var store = this._store;
+        var store = this.$.store;
         this._neighbors = NEIGHBOR_DELTAS.map(function (mapping) {
           return store.getTileXYZ(this.x + mapping[0], this.y + mapping[1], this.z + mapping[2]);
         }.bind(this));
@@ -223,11 +239,11 @@
 
     /**
      * Get a ring of positions given a radius.
-     * @param {number} radius - The radius.
-     * @return {array<Tile>}
+     * @param {Number} radius - The radius.
+     * @return {[Tile]}
      */
     getRing: function (radius) {
-      var store = this._store;
+      var store = this.$.store;
 
       if (radius <= 0) { return [store.getTileXYZ(this.x, this.y, this.z)]; }
 
@@ -240,7 +256,7 @@
       var results = [];
       for (var i = 0; i < 6; i++) {
         for (var j = 0; j < radius; j++) {
-          if (!currentCubePos.isEmpty) {
+          if (!currentCubePos.isFake) {
             results.push(currentCubePos);
           }
           currentCubePos = currentCubePos.getNeighbors()[i];
@@ -250,51 +266,83 @@
       return results;
     },
 
+    /**
+     * Fire a event when the tile is clicked. If the tile is marked as plain,
+     * the event is different.
+     * @param  {CustomEvent} e Tap event
+     */
     _onTap: function(e) {
-      var eventName = (this.isSkill) ? 'tile-skill' : 'tile-empty';
+      var eventName = 'hex-tile-tap-' + ((this.isPlain) ? 'plain' : 'empty');
 
       this.fire(eventName, {
         i: this.i,
-        j: this.j,
-        tapEvent: e.detail
+        j: this.j
       });
-
-      if (this.isSkill) {
-        page(this.route);
-      }
     },
 
+    /**
+     * Set the width of the component whenever the `width` property changes.
+     * @return {Number} Width
+     */
     _widthChanged: function() {
       var width = (Math.sqrt(3) / 2) * this.width;
+
       this.style.width = isNaN(this.width) ? width : width + 'px';
+      return width;
     },
 
+    /**
+     * Set the height of the component whenever the `height` property changes.
+     * @return {Number} Height
+     */
     _heightChanged: function() {
       this.style.height = isNaN(this.height) ? this.height : this.height + 'px';
+      return this.height;
     },
 
+    /**
+     * Set the color of the tile whenever the `color` property changes.
+     */
     _colorChanged: function() {
       d3.select(this.$.tile).select('g').select('#hexagon').style('fill', this.color);
     },
 
+    /**
+     * Set the marginTop of the component whenever the `marginTop` property changes.
+     * @return {Number} Margin top
+     */
     _marginTopChanged: function() {
       this.style.marginTop = '-' + this.marginTop + 'px';
+      return this.marginTop;
     },
 
-    disableLink: function() {
+    /**
+     * Disable all event.
+     */
+    disableEvent: function() {
       this.style.pointerEvents = 'none';
       this.style.cursor = 'default';
     },
 
-    enableLink: function() {
+    /**
+     * Enable all event.
+     */
+    enableEvent: function() {
       this.style.pointerEvents = 'auto';
       this.style.cursor = 'pointer';
     },
 
+    /**
+     * Hide the component.
+     */
     hide: function () {
       this._hidden = true;
     },
 
+    /**
+     * Show the component.
+     * @return {[type]} [description]
+     */
     show: function () {
       this._hidden = false;
     }

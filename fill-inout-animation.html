@@ -1,0 +1,51 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../neon-animation/neon-animation-behavior.html">
+<link rel="import" href="../neon-animation/web-animations.html">
+
+
+<!--
+`<fill-inout-animation>` animates the fill property of an element from the initial color to a custom color.
+It is usefull to manipulate svg element.
+Configuration:
+```
+{
+  name: 'fill-inout-animation',
+  node: <node>,
+  color: <color>,
+  timing: <animation-timing>
+}
+```
+-->
+
+<script>
+  Polymer({
+
+    is: 'fill-inout-animation',
+
+    behaviors: [
+      Polymer.NeonAnimationBehavior
+    ],
+
+    configure: function(config) {
+      var node = this.node = config.node,
+          color = this.color = node.style.fill || node.getAttribute('fill');
+
+      this._effect = new KeyframeEffect(node, [
+        {'fill': color},
+        {'fill': config.color},
+        {'fill': color}
+      ], this.timingFromConfig(config));
+      return this._effect;
+    },
+
+    /**
+     * Set to the initial value of the fill property of the HTML element.
+     * This is a workaround for firefox and safari.
+     * The css fill property is well supported in chrome.
+     */
+    complete: function() {
+      this.node.setAttribute('fill', this.color);
+      this.node.style.fill = this.color;
+    }
+  });
+</script>

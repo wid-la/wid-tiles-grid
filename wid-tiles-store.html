@@ -1,6 +1,22 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="wid-hex-tile.html">
 
+<!--
+An element that display store a set of hexagonal tiles.
+The store is indexed twice. Once with the cube layout and once with the
+even-q layout. 
+
+Example:
+
+```
+  <wid-tiles-store id="store"></wid-tiles-store>
+```
+
+@group Wid
+@element wid-tiles-store
+@demo demo/index.html
+@hero hero.svg
+-->
 <script>
 (function() {
 
@@ -21,6 +37,11 @@
       }
     },
 
+    /**
+     * Compute the position of a tile in the even-q and cube layouts.
+     * @param  {Tile} tile A tile with at least one set of coordinates in one layout.
+     * @return {{i, j, x, y, z: Number}}      The complete coordinates of the tile.
+     */
     _getPositions: function (tile) {
       /*jslint bitwise: true */
       var pos = {
@@ -39,11 +60,19 @@
       return pos;
     },
 
+    /**
+     * Add a tile to the store.
+     * @param {Tile} tile A tile.
+     */
     addTile: function (tile) {
       this._addTileXYZ(tile);
       this._addTileIJ(tile);
     },
 
+    /**
+     * Add a tile in the tilesIj Map and notifies parents.
+     * @param {Tile} tile A tile.
+     */
     _addTileIJ: function (tile) {
       var pos = this._getPositions(tile);
 
@@ -53,6 +82,10 @@
 
     },
 
+    /**
+     * Add a tile in the tilesXyz Map and notifies parents.
+     * @param {Tile} tile A tile.
+     */
     _addTileXYZ: function (tile) {
       var pos = this._getPositions(tile);
 
@@ -63,6 +96,15 @@
 
     },
 
+    /**
+     * Return a tile knowing the cube coordinates.
+     * If the tile doesn't exist. We create a fake tile and store it.
+     * This fake tile is usefull when the user get the neighbors of a tile.
+     * @param  {Number} x X coordinate
+     * @param  {Number} y Y coordinate
+     * @param  {Number} z Z coordinate
+     * @return {Tile}   The tile.
+     */
     getTileXYZ: function (x, y, z) {
       try {
         return this.tilesXyz[x][y][z];
@@ -72,7 +114,7 @@
         emptyTile.x = x;
         emptyTile.y = y;
         emptyTile.z = z;
-        emptyTile.isEmpty = true;
+        emptyTile.isFake = true;
         emptyTile._store = this;
 
         this.addTile(emptyTile);
@@ -81,6 +123,14 @@
       }
     },
 
+    /**
+     * Return a tile knowing the even-q coordinates.
+     * If the tile doesn't exist. We create a fake tile and store it.
+     * This fake tile is usefull when the user get the neighbors of a tile.
+     * @param  {Number} i I coordinate
+     * @param  {Number} j J coordinate
+     * @return {Tile}   The tile.
+     */
     getTileIJ: function (i, j) {
      try {
         return this.tilesIj[i][j];
@@ -89,7 +139,7 @@
 
         emptyTile.i = i;
         emptyTile.j = j;
-        emptyTile.isEmpty = true;
+        emptyTile.isFake = true;
         emptyTile._store = this;
 
         this.addTile(emptyTile);
