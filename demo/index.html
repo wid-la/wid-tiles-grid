@@ -16,20 +16,57 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <link rel="import" href="../wid-hex-grid.html">
   </head>
-  <body>
+  <body class="fullbleed">
+
+    <style>
+      wid-hex-grid {
+        width: 100%;
+        height: 400px;
+      }
+    </style>
 
     <p>An example of <code>&lt;wid-hex-grid&gt;</code>:</p>
 
-    <button>Say Something</button>
-
-    <wid-hex-grid author='{"name": "Lord Meowser", "image": "http://placekitten.com/g/200/300"}' fancy>
-      <h2>Hello wid-hex-grid</h2>
-    </wid-hex-grid>
+    <template is="dom-bind" id="app">
+      <wid-hex-grid
+        tiles="[[tiles]]">
+        <h2>Hello wid-hex-grid</h2>
+      </wid-hex-grid>
+    </template>
 
     <script>
-      document.querySelector('button').addEventListener('click', function() {
-        alert(document.querySelector('wid-hex-grid').sayHello('Hallo!'));
-      });
+      var app = document.querySelector('#app');
+
+      app.width = 1000;
+      app.height = 400;
+      app.tiles = [
+        {
+          name: 'Polymer',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Angular.js',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Node.js',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Swift',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Android',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Docker',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Go',
+          image: 'http://lorempixel.com/48/48/'
+        }, {
+          name: 'Polymer',
+          image: 'http://lorempixel.com/48/48/'
+        }
+      ];
+
     </script>
 
   </body>

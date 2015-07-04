@@ -19,7 +19,12 @@
     "/demo/"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.0.0"
+    "polymer": "Polymer/polymer#~1.0.5",
+    "neon-animation": "PolymerElements/neon-animation#~1.0.4",
+    "web-animations-js": "2.1.0",
+    "iron-image": "PolymerElements/iron-image#~1.0.2",
+    "d3": "~3.5.5",
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#~1.0.2"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",

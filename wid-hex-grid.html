@@ -7,146 +7,528 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
+
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-image/iron-image.html">
+<link rel="import" href="../neon-animation/neon-animation.html">
+<link rel="import" href="../neon-animation/neon-animations.html">
 
-<!--
-An element providing a solution to no problem in particular.
+<link rel="import" href="d3-import.html">
+<link rel="import" href="wid-hex-tile.html">
+<link rel="import" href="wid-tiles-store.html">
 
-Example:
 
-    <wid-hex-grid></wid-hex-grid>
-
-@group Seed Elements
-@element wid-hex-grid
-@demo demo/index.html
-@hero hero.svg
--->
 <dom-module id="wid-hex-grid">
-
   <style>
+
     :host {
       display: block;
-      box-sizing: border-box;
+      height: 100%;
     }
 
-    .author img {
-      float: left;
-      margin-right: 5px;
-      max-height: 100px;
-      max-width: 100px;
+    paper-dialog {
+      margin: 50px;
     }
+
   </style>
-
   <template>
-    <h1>&lt;wid-hex-grid&gt;</h1>
-    <content></content>
-    <p class="author">
-      <img src="{{author.image}}">
-      Cheers,<br/>
-      <span class="name">{{author.name}}</span>
-    </p>
-  </template>
 
+    <wid-tiles-store id="store"></wid-tiles-store>
+
+    <div id="tiles" class="layout vertical center-center">
+
+      <template is="dom-repeat" items="[[_tilesModel]]" as="row">
+
+        <div class="row layout horizontal center-center">
+
+          <template is="dom-repeat" items="[[row]]" as="hex">
+
+            <wid-hex-tile
+              margin-top="[[hex.marginTop]]"
+              x="[[hex.x]]"
+              y="[[hex.y]]"
+              z="[[hex.z]]"
+              i="[[hex.i]]"
+              j="[[hex.j]]"
+              color="[[hex.color]]"
+              width="[[tileWidth]]"
+              height="[[tileHeight]]"
+              is-skill="[[hex.isPlain]]">
+
+              <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
+              <span>[[hex.name]]</span>
+
+            </wid-hex-tile>
+
+          </template>
+
+        </div>
+
+      </template>
+
+    </div>
+
+  </template>
 </dom-module>
 
 <script>
+(function() {
+
+  var shuffleArray = function (array){
+    var currentIndex = array.length, temporaryValue, randomIndex ;
+
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex -= 1;
+
+      // And swap it with the current element.
+      temporaryValue = array[currentIndex];
+      array[currentIndex] = array[randomIndex];
+      array[randomIndex] = temporaryValue;
+    }
+
+    return array;
+  };
 
   Polymer({
-
     is: 'wid-hex-grid',
 
+    behaviors: [
+      Polymer.IronResizableBehavior,
+      Polymer.NeonAnimationRunnerBehavior,
+      Polymer.NeonSharedElementAnimatableBehavior
+    ],
+
     properties: {
-
-      /**
-       * `fancy` indicates that the element should don a monocle and tophat,
-       * while checking its pocket watch.
-       */
-      fancy: Boolean,
-
-      /**
-       * Describes the author of the element, but is really just an excuse to
-       * show off JSDoc annotations.
-       *
-       * @type {{name: string, image: string}}
-       */
-      author: {
+      currentTile: {
         type: Object,
-        // Use `value` to provides a default value for a property, by setting it
-        // on your element's prototype.
-        //
-        // If you provide a function, as we do here, Polymer will call that
-        // _per element instance_.
-        //
-        // We do that to ensure that each element gets its own copy of the
-        // value, rather than having it shared across all instances (via the
-        // prototype).
+        notify: true
+      },
+
+      animationConfig: {
         value: function() {
           return {
-            name:  'Dimitri Glazkov',
-            image: 'http://addyosmani.com/blog/wp-content/uploads/2013/04/unicorn.jpg',
+            'tile-ripple': [],
+
+            'tiles-waterfall': {
+              name: 'cascaded-animation',
+              animation: 'slide-down-animation',
+              nodes: [],
+              nodeDelay: 5
+            },
+
+            'exit': [{
+              name: 'hero-animation',
+              id: 'hero',
+              fromPage: this
+            }]
           };
         }
       },
 
+      _width: {
+        type: Number
+      },
+
+      _height: {
+        type: Number
+      },
+
+      _rowMarginTop: {
+        type: Number
+      },
+
+      tileWidth: {
+        type: Number,
+        value: 125,
+        observer: '_tileWidthChanged'
+      },
+
+      _tileRealWidth: {
+        type: Number
+      },
+
+      tileHeight: {
+        type: Number,
+        value: 125
+      },
+
+      _tilesModel: {
+        type: Array
+      },
+
+      _tiles: {
+        type: Array
+      },
+
+      tiles: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+
+      tilesColors: {
+        type: Array,
+        value: function () {
+          var numberOfColors = 10,
+              color = d3.scale.linear()
+                .domain([0, numberOfColors])
+                .range(['lightskyblue', 'azure']),
+              result = [];
+
+          for (var i = 0; i < numberOfColors; i++) {
+            result.push(color(i));
+          }
+          return result;
+        }
+      },
+
+      tileColorPicker: {
+        type: Object,
+        value: function () {
+          return function(param) {
+            var index = (param.tilesSinceLastPlain % 2 === 0) ? (param.tilesSinceLastPlain) : (Math.abs(this.tilesColors.length - param.tilesSinceLastPlain));
+            return this.tilesColors[index % this.tilesColors.length];
+          };
+        }
+      },
+
+      rippleColors: {
+        type: Array,
+        value: function () {
+          var numberOfColors = 4,
+              color = d3.scale.linear()
+              .domain([0, numberOfColors])
+              .range(['grey', 'grey']),
+              result = [];
+
+          for (var i = 0; i < numberOfColors; i++) {
+            result.push(color(i));
+          }
+          return result;
+        }
+      },
+
+      rippleColorPicker: {
+        type: Object,
+        value: function () {
+          return function(index) {
+            return this.rippleColors[index % this.rippleColors.length];
+          };
+        }
+      },
+
+
+
+      plainTileInsertionChooser: {
+        type: Object,
+        value: function() {
+          return function(param) {
+            return (param.tilesSinceLastPlain === param.emptiesBetweenPlain);
+          };
+        }
+      }
     },
 
-    // Element Lifecycle
-
-    ready: function() {
-      // `ready` is called after all elements have been configured, but
-      // propagates bottom-up. This element's children are ready, but parents
-      // are not.
-      //
-      // This is the point where you should make modifications to the DOM (when
-      // necessary), or kick off any processes the element wants to perform.
+    listeners: {
+      'dom-change': '_onDomChange',
+      'iron-resize': '_onIronResize',
+      'tile-skill': '_onTileSkill',
+      'tile-empty': '_onTileEmpty',
+      'neon-animation-finish': '_onNeonAnimationFinish'
     },
 
-    attached: function() {
-      // `attached` fires once the element and its parents have been inserted
-      // into a document.
-      //
-      // This is a good place to perform any work related to your element's
-      // visual state or active behavior (measuring sizes, beginning animations,
-      // loading resources, etc).
-    },
-
-    detached: function() {
-      // The analog to `attached`, `detached` fires when the element has been
-      // removed from a document.
-      //
-      // Use this to clean up anything you did in `attached`.
-    },
-
-    // Element Behavior
+    observers: [
+      '_updateTiles(_width, _height, tiles)'
+    ],
 
     /**
-     * The `wid-hex-grid-lasers` event is fired whenever `fireLasers` is called.
-     *
-     * @event wid-hex-grid-lasers
-     * @detail {{sound: String}}
+     * Called whenever the window is resized.
+     * Get the size of this component.
+     * @return {DOMRect}    The exact size and position of this component
      */
-
-    /**
-     * Sometimes it's just nice to say hi.
-     *
-     * @param {string} greeting A positive greeting.
-     * @return {string} The full greeting.
-     */
-    sayHello: function(greeting) {
-      var response = greeting || 'Hello World!';
-      return 'wid-hex-grid says, ' + response;
+    _onIronResize: function () {
+      var pos = this.getBoundingClientRect();
+      this._width = pos.width;
+      this._height = pos.height;
+      return pos;
     },
 
     /**
-     * Attempts to destroy this element's enemies with an any beam of light!
-     *
-     * Or, at least, dispatches an event in the vain hope that someone else will
-     * do the zapping.
+     * Compute the exact size of the hexagonal grid based on the
+     * number of rows and the tile height.
+     * @param  {Number} numberOfRows Number of rows in the hexagonal grid
+     * @return {Number}              Exact size of the hexagonal grid
      */
-    fireLasers: function() {
-      this.fire('wid-hex-grid-lasers', {sound: 'Pew pew!'});
+    _getTilesHeight: function (numberOfRows) {
+      return (3 / 4 * numberOfRows + 1 / 4) * this.tileHeight;
+    },
+
+    /**
+     * Compute the width of an hexagonal tile based on the desired width `tileWidth`
+     * @return {Number} The width of an hexagonal tile.
+     */
+    _tileWidthChanged: function () {
+      this._tileRealWidth = Math.floor((Math.sqrt(3) / 2) * this.tileWidth);
+      return this._tileRealWidth;
+    },
+
+
+    /**
+     * Compute the hexagonal parameters based on the height and width of this component, the tile height, the real tile width
+     * and the number of plain tiles.
+     * @return {{numberOfRows: Number, tilesPerRow: Number, emptiesBetweenPlain: Number, numberOfTiles: Number}} The grid parameters
+     */
+    _computeGridParameters: function () {
+      var numberOfRows = Math.floor(this._height / (this.tileHeight / 2)), //this is an upward estimation 
+          theoricTilesPerRow = Math.floor(this._width / this._tileRealWidth),
+          tilesPerRow = [],
+          numberOfTiles = 0, emptiesBetweenPlain,
+          i, ii;
+
+      //to respect the even-q layout, we remove one tile of each odd row
+      for (i = 0, ii = numberOfRows; i < ii; i++) {
+        if (i % 2 === 1) {
+          tilesPerRow.push(theoricTilesPerRow - 1);
+        } else {
+          tilesPerRow.push(theoricTilesPerRow);
+        }
+      }
+      while(this._getTilesHeight(numberOfRows) > this._height) { //we recompute the numberOfRows to be more accurate
+        numberOfRows--;
+        tilesPerRow.pop();
+      }
+      tilesPerRow.forEach(function (n) {
+        numberOfTiles += n;
+      });
+      emptiesBetweenPlain = Math.floor(numberOfTiles / this.tiles.length);
+
+      return {
+        numberOfRows: numberOfRows,
+        tilesPerRow: tilesPerRow,
+        emptiesBetweenPlain: emptiesBetweenPlain,
+        numberOfTiles: numberOfTiles
+      };
+    },
+
+    /**
+     * Compute the tile layout parameters for even-q and cube layouts.
+     * @param  {{i: Number, j: Number}} param the tile position in even-q layout.
+     * @return {{i: Number, j: Number, x: Number, y: Number, z: Number, marginTop: Number}}       The tile layout parameters
+     */
+    _computeTilePositions: function (param) {
+      /*jslint bitwise: true */
+      var i = param.i,
+          j = param.j,
+          x = j - Math.floor((i - (i&1)) / 2),
+          z = i,
+          y = -x-z;
+
+      return {
+        i: i,
+        j: j,
+        x: x,
+        y: y,
+        z: z
+      };
+    },
+
+    /**
+     * Compute the tile style especially the margin top.
+     * @param  {TilePosition} param The tile positions.
+     * @return {{marginTop: Number}}      The tile margin top.
+     */
+    _computeTileStyle: function (param) {
+      return {
+        marginTop: ((param.i > 0) ? this.tileHeight / 4 : 0), //except the first row, other have a margin-top
+        fillColor: this.tileColorPicker({
+          row: param.i,
+          col: param.j,
+          tilesSinceLastPlain: param.tilesSinceLastPlain
+        })
+      }; 
+    },
+
+    /**
+     * Create a complete `empty tile` model.
+     * @param  {{i: Number, j: Number}} positionParams The position in even-q layout of the tile.
+     * @return {EmptyTile}       The empty tile model.
+     */
+    _computeEmptyTileModel: function (positionParams) {
+      var tile = this._computeTilePositions(positionParams),
+          tileStyle = this._computeTileStyle(positionParams);
+
+      tile.isPlain = false;
+      tile.marginTop = tileStyle.marginTop;
+      tile.color = tileStyle.fillColor;
+
+      return tile;
+    },
+
+    /**
+     * Create a complete `plain tile` model.
+     * @param  {TileContent} content The tile content.
+     * @param  {{i: Number, j: Number}} positionParams The position in even-q layout of the tile.
+    * @return {PlainTile}       The empty tile model.
+     */
+    _computePlainTileModel: function (content, positionParams) {
+      var tile = this._computeEmptyTileModel(positionParams),
+          tileStyle = this._computeTileStyle(positionParams);
+
+      tile.isPlain = true;
+      tile.name = content.name;
+      tile.image =  content.image;
+
+      return tile;
+    },
+
+    /**
+     * Update the hexagonal grid model. This is trigger whenever the size of the component change or the
+     * `tiles` property change.
+     * @param  {Number} width  Width of the component
+     * @param  {Number} height Height of the component
+     * @return {HexGrid}        The grid model.
+     */
+    _updateTiles: function(width, height) {
+      if (!width || !height) {
+        return;
+      }
+
+      var i, ii, j, jj,
+          gridParamters = this._computeGridParameters(),
+          currentTile = 0,
+          tilesSinceLastPlain = gridParamters.emptiesBetweenPlain,
+          tilesModel = [],
+          row;
+
+
+      for (i = 0, ii = gridParamters.numberOfRows; i < ii; i++) {
+
+        row = [];
+        for (j = 0, jj = gridParamters.tilesPerRow[i]; j < jj; j++) {
+
+          //check if we insert in the model a plain or a empty tile
+          if (this.plainTileInsertionChooser({
+            tilesSinceLastPlain: tilesSinceLastPlain,
+            emptiesBetweenPlain: gridParamters.emptiesBetweenPlain
+          }) && (currentTile < this.tiles.length)) {
+
+            //workaround if the number total of tiles equal the number of plain tiles to insert
+            tilesSinceLastPlain = (gridParamters.emptiesBetweenPlain === 1) ? 1 : 0; 
+            row.push(this._computePlainTileModel(this.tiles[currentTile], {
+              i: i,
+              j: j,
+              tilesSinceLastPlain: tilesSinceLastPlain
+            }));
+            currentTile++;
+
+          } else {
+
+            tilesSinceLastPlain++;
+            row.push(this._computeEmptyTileModel({
+              i: i,
+              j: j,
+              tilesSinceLastPlain: tilesSinceLastPlain
+            }));
+
+          }
+
+        }
+        tilesModel.push(row);
+      }
+
+      //this trigger the databing since the ref of _tilesModel is overrided
+      this._tilesModel = tilesModel;
+      return this._tilesModel;
+    },
+
+    _configureRipple: function (e) {
+      var store = this.$.store,
+          i = e.detail.i,
+          j = e.detail.j,
+          tile = store.getTileIJ(i, j),
+          ui,
+          animationConfig = this.animationConfig['tile-ripple'] = [],
+          nodes, cpt = 0;
+      while ((nodes = tile.getRing(cpt)).length) {
+
+        ui = nodes.map(function (t) {
+          return t._SVGHexagonPath;
+        });
+
+        nodes.forEach(function (t) {
+          t.disableLink();
+        });
+
+        animationConfig.push({
+          name: 'cascaded-animation',
+          animation: 'fill-blink-animation',
+          color: this.rippleColorPicker(cpt),
+          nodes: ui,
+          nodeDelay: 1,
+          timing: {
+            delay: 50 * cpt,
+            duration: 300
+          }
+        });
+        cpt++;
+      }
+
+      return cpt;
+    },
+
+    _onTileEmpty: function (e) {
+      this.async(function() {
+        this._configureRipple(e);
+        this.playAnimation('tile-ripple');
+      });
+    },
+
+    _onTileSkill: function(e) {
+      this.currentTile = e.target;
+      this.currentTile.hide();
+
+      this.async(function() {
+        this._configureRipple(e);
+        this.playAnimation('tile-ripple');
+      });
+
+      this.sharedElements = {
+        'hero': e.target
+      };
+      this._updateExitAnimation(e.target);
+    },
+
+    _updateExitAnimation: function (tile) {
+      this.animationConfig.exit = [this.animationConfig.exit[0]].concat({
+        animatable: tile,
+        type: 'fade-out'
+      });
+    },
+
+    _onNeonAnimationFinish: function() {
+      this._tiles.forEach(function (t) {
+        t.enableLink();
+      });
+    },
+
+    /**
+     * This function cache the DOM nodes into the the tiles Store.
+     */
+    _onDomChange: function() {
+      var store = this.$.store,
+          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('app-skill-tile');
+
+      tiles.forEach(function (tile) {
+        store.addTile(tile);
+      });
+
+      this.animationConfig['tiles-waterfall'].nodes = shuffleArray(tiles);
     }
-
   });
-
+})();
 </script>

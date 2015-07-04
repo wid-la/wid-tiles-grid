@@ -1,0 +1,113 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="wid-hex-tile.html">
+
+
+<script>
+(function() {
+
+  Polymer({
+    is: 'wid-tiles-store',
+
+    properties: {
+      tilesXyz: {
+        type: Array,
+        notify: true,
+        value: []
+      },
+
+      tilesIj: {
+        type: Array,
+        notify: true,
+        value: []
+      }
+    },
+
+    _getPositions: function (tile) {
+      /*jslint bitwise: true */
+      var pos = {
+        x: tile.x || (tile.j - Math.floor((tile.i - (tile.i&1)) / 2)),
+        y: tile.y || (- tile.x - tile.z),
+        z: tile.z || tile.i,
+        i: tile.i || tile.z,
+        j: tile.j || (tile.x + Math.floor((tile.z - (tile.z&1)) / 2))
+      };
+      pos.x = (!pos.x) ? 0: pos.x;
+      pos.y = (!pos.y) ? 0: pos.y;
+      pos.z = (!pos.z) ? 0: pos.z;
+      pos.i = (!pos.i) ? 0: pos.i;
+      pos.j = (!pos.j) ? 0: pos.j;
+
+      return pos;
+    },
+
+    addTile: function (tile) {
+      this._addTileXYZ(tile);
+      this._addTileIJ(tile);
+    },
+
+    _addTileIJ: function (tile) {
+      var pos = this._getPositions(tile);
+
+      this.tilesIj[pos.i] = this.tilesIj[pos.i] || [];
+      this.tilesIj[pos.i][pos.j] = this.tilesIj[pos.i][pos.j] || [];
+      this.set('tilesIj.' + pos.i + '.' + pos.j, tile);
+
+    },
+
+    _addTileXYZ: function (tile) {
+      var pos = this._getPositions(tile);
+
+      this.tilesXyz[pos.x] = this.tilesXyz[pos.x] || [];
+      this.tilesXyz[pos.x][pos.y] = this.tilesXyz[pos.x][pos.y] || [];
+      this.tilesXyz[pos.x][pos.y][pos.z] = this.tilesXyz[pos.x][pos.y][pos.z] || [];
+      this.set('tilesXyz.' + pos.x + '.' + pos.y + '.' + pos.z, tile);
+
+    },
+
+    getTileXYZ: function (x, y, z) {
+      try {
+        return this.tilesXyz[x][y][z];
+      } catch (e) {
+        var emptyTile = new AppSkillTile();
+
+        emptyTile.x = x;
+        emptyTile.y = y;
+        emptyTile.z = z;
+        emptyTile.isEmpty = true;
+        emptyTile._store = this;
+
+        this.addTile(emptyTile);
+
+        return emptyTile;
+      }
+    },
+
+    getTileIJ: function (i, j) {
+     try {
+        return this.tilesIj[i][j];
+      } catch (e) {
+        var emptyTile = new AppSkillTile();
+
+        emptyTile.i = i;
+        emptyTile.j = j;
+        emptyTile.isEmpty = true;
+        emptyTile._store = this;
+
+        this.addTile(emptyTile);
+
+        return emptyTile;
+      }
+    }
+  });
+})();
+</script>
