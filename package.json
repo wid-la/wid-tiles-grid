@@ -1,0 +1,35 @@
+{
+  "name": "wid-hex-grid",
+  "version": "1.0.0",
+  "authors": [
+    "Anonymous <anonymous@example.com>"
+  ],
+  "description": "An element providing a solution to no problem in particular.",
+  "keywords": [
+    "web-component",
+    "web-components",
+    "polymer",
+    "seed"
+  ],
+  "main": "wid-hex-grid.html",
+  "license": "http://polymer.github.io/LICENSE.txt",
+  "homepage": "https://github.com/<USERNAME>/wid-hex-grid/",
+  "ignore": [
+    "/.*",
+    "/test/",
+    "/demo/"
+  ],
+  "scripts": {
+    "postinstall": "bower install",
+    "test": "gulp test:remote"
+  },
+  "devDependencies": {
+    "bower": "^1.4.1",
+    "browser-sync": "^2.7.6",
+    "gulp": "^3.8.11",
+    "gulp-bg": "0.0.5",
+    "polyserve": "^0.4.0",
+    "ps-node": "0.0.4",
+    "web-component-tester": "^3.1.4"
+  }
+}
