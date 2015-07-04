@@ -1,13 +1,3 @@
-<!--
-@license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
-
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-image/iron-image.html">
 <link rel="import" href="../neon-animation/neon-animation.html">
@@ -80,247 +70,234 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script>
 (function() {
 
-  /**
-   * The purpose of this kind of definition is optimization.
-   * Indeed, we can instantiate a tile without creating the DOM as document.createElement do.
-   */
-  var Tile = (function() {
-    var NEIGHBOR_DELTAS = [
-      [+1, -1, 0], [+1, 0, -1], [0, +1, -1],
-      [-1, +1, 0], [-1, 0, +1], [0, -1, +1]
-    ];
+  var NEIGHBOR_DELTAS = [
+    [+1, -1, 0], [+1, 0, -1], [0, +1, -1],
+    [-1, +1, 0], [-1, 0, +1], [0, -1, +1]
+  ];  
+   
+  Polymer({
+    is: 'wid-hex-tile',
 
-    function Tile() {}
+    behaviors: [
+      Polymer.NeonAnimationRunnerBehavior
+    ],
 
-    Tile.prototype = {
-      is: 'wid-hex-tile',
+    properties: {
+      animationConfig: {
+        value: function() {
+          return {
+            'fade-out': [{
+              name: 'fade-out-animation',
+              node: this
+            }],
 
-      behaviors: [
-        Polymer.NeonAnimationRunnerBehavior
-      ],
-
-      properties: {
-        animationConfig: {
-          value: function() {
-            return {
-              'fade-out': [{
-                name: 'fade-out-animation',
-                node: this
-              }],
-
-              'fade-in': [{
-                name: 'fade-in-animation',
-                node: this
-              }]
-            };
-          }
-        },
-
-        _neighbors: {
-          type: Array
-        },
-
-        x: {
-          type: Number
-        },
-
-        y: {
-          type: Number
-        },
-
-        z: {
-          type: Number
-        },
-
-        i: {
-          type: Number
-        },
-
-        j: {
-          type: Number
-        },
-
-        color: {
-          type: String,
-          value: '#f0f',
-          observer: '_colorChanged'
-        },
-
-        width: {
-          type: Number,
-          value: 150,
-          observer: '_widthChanged'
-        },
-
-        height: {
-          type: Number,
-          value: 150,
-          observer: '_heightChanged'
-        },
-
-        margin: {
-          type: Number,
-          value: 1
-        },
-
-        isSkill: {
-          type: Boolean
-        },
-
-        marginTop: {
-          type: Number,
-          observer: '_marginTopChanged'
-        },
-
-        isEmpty: {
-          type: Boolean,
-          value: false
-        },
-
-        _SVGHexagonPath: {
-          value: Object
-        },
-
-        _store: {
-          type: Object
-        },
-
-        route: {
-          type: String
+            'fade-in': [{
+              name: 'fade-in-animation',
+              node: this
+            }]
+          };
         }
       },
 
-      listeners: {
-        tap: '_onTap'
+      _neighbors: {
+        type: Array
       },
 
-      attached: function() {
-        var width = (Math.sqrt(3) / 2) * this.width,
-            radius = (this.width + this.height) / 4;
-
-        var svg = d3.select('body').append('svg')
-            .remove()
-            .attr('width', width)
-            .attr('height', this.height)
-            .attr('class', 'fit');
-
-        var g = svg.append('g')
-            .attr('transform', 'translate(' + width / 2 + ',' + this.height / 2 + ')');
-
-        var hexbin = d3.hexbin()
-          .radius(radius);
-
-        g.selectAll('#hexagon')
-            .data(hexbin([[0,0]]))
-          .enter().append('path')
-            .attr('id', 'hexagon')
-            .attr('d', hexbin.hexagon(radius - this.margin))
-            .style('fill', this.color);
-
-        Polymer.dom(this.$.tile).insertBefore(svg.node(), this.$.anchor);
-
-        //optimization
-        this._SVGHexagonPath = this.$$('path');
-        this._store = this.$.store;
+      x: {
+        type: Number
       },
 
-      /**
-       * Get all 6 neighbors.
-       * @return {array<Tile>}
-       */
-      getNeighbors: function () {
-        if (!this._neighbors) {
-          var store = this._store;
-          this._neighbors = NEIGHBOR_DELTAS.map(function (mapping) {
-            return store.getTileXYZ(this.x + mapping[0], this.y + mapping[1], this.z + mapping[2]);
-          }.bind(this));
-        }
-        return this._neighbors;
+      y: {
+        type: Number
       },
 
-      /**
-       * Get a ring of positions given a radius.
-       * @param {number} radius - The radius.
-       * @return {array<Tile>}
-       */
-      getRing: function (radius) {
-        var store = this._store;
-
-        if (radius <= 0) { return [store.getTileXYZ(this.x, this.y, this.z)]; }
-
-        var currentCubePos = store.getTileXYZ(
-          this.x + (NEIGHBOR_DELTAS[4][0] * radius),
-          this.y + (NEIGHBOR_DELTAS[4][1] * radius),
-          this.z + (NEIGHBOR_DELTAS[4][2] * radius)
-        );
-
-        var results = [];
-        for (var i = 0; i < 6; i++) {
-          for (var j = 0; j < radius; j++) {
-            if (!currentCubePos.isEmpty) {
-              results.push(currentCubePos);
-            }
-            currentCubePos = currentCubePos.getNeighbors()[i];
-          }
-        }
-
-        return results;
+      z: {
+        type: Number
       },
 
-      _onTap: function(e) {
-        var eventName = (this.isSkill) ? 'tile-skill' : 'tile-empty';
-
-        this.fire(eventName, {
-          i: this.i,
-          j: this.j,
-          tapEvent: e.detail
-        });
-
-        if (this.isSkill) {
-          page(this.route);
-        }
+      i: {
+        type: Number
       },
 
-      _widthChanged: function() {
-        var width = (Math.sqrt(3) / 2) * this.width;
-        this.style.width = isNaN(this.width) ? width : width + 'px';
+      j: {
+        type: Number
       },
 
-      _heightChanged: function() {
-        this.style.height = isNaN(this.height) ? this.height : this.height + 'px';
+      color: {
+        type: String,
+        value: '#f0f',
+        observer: '_colorChanged'
       },
 
-      _colorChanged: function() {
-        d3.select(this.$.tile).select('g').select('#hexagon').style('fill', this.color);
+      width: {
+        type: Number,
+        value: 150,
+        observer: '_widthChanged'
       },
 
-      _marginTopChanged: function() {
-        this.style.marginTop = '-' + this.marginTop + 'px';
+      height: {
+        type: Number,
+        value: 150,
+        observer: '_heightChanged'
       },
 
-      disableLink: function() {
-        this.style.pointerEvents = 'none';
-        this.style.cursor = 'default';
+      margin: {
+        type: Number,
+        value: 1
       },
 
-      enableLink: function() {
-        this.style.pointerEvents = 'auto';
-        this.style.cursor = 'pointer';
+      isSkill: {
+        type: Boolean
       },
 
-      hide: function () {
-        this._hidden = true;
+      marginTop: {
+        type: Number,
+        observer: '_marginTopChanged'
       },
 
-      show: function () {
-        this._hidden = false;
+      isEmpty: {
+        type: Boolean,
+        value: false
+      },
+
+      _SVGHexagonPath: {
+        value: Object
+      },
+
+      _store: {
+        type: Object
+      },
+
+      route: {
+        type: String
       }
-    };
+    },
 
-    return Tile;
-  })();
+    listeners: {
+      tap: '_onTap'
+    },
 
-  Polymer(Tile.prototype);
-  window.AppSkillTile = Tile;
+    attached: function() {
+      var width = (Math.sqrt(3) / 2) * this.width,
+          radius = (this.width + this.height) / 4;
+
+      var svg = d3.select('body').append('svg')
+          .remove()
+          .attr('width', width)
+          .attr('height', this.height)
+          .attr('class', 'fit');
+
+      var g = svg.append('g')
+          .attr('transform', 'translate(' + width / 2 + ',' + this.height / 2 + ')');
+
+      var hexbin = d3.hexbin()
+        .radius(radius);
+
+      g.selectAll('#hexagon')
+          .data(hexbin([[0,0]]))
+        .enter().append('path')
+          .attr('id', 'hexagon')
+          .attr('d', hexbin.hexagon(radius - this.margin))
+          .style('fill', this.color);
+
+      Polymer.dom(this.$.tile).insertBefore(svg.node(), this.$.anchor);
+
+      //optimization
+      this._SVGHexagonPath = this.$$('path');
+      this._store = this.$.store;
+    },
+
+    /**
+     * Get all 6 neighbors.
+     * @return {array<Tile>}
+     */
+    getNeighbors: function () {
+      if (!this._neighbors) {
+        var store = this._store;
+        this._neighbors = NEIGHBOR_DELTAS.map(function (mapping) {
+          return store.getTileXYZ(this.x + mapping[0], this.y + mapping[1], this.z + mapping[2]);
+        }.bind(this));
+      }
+      return this._neighbors;
+    },
+
+    /**
+     * Get a ring of positions given a radius.
+     * @param {number} radius - The radius.
+     * @return {array<Tile>}
+     */
+    getRing: function (radius) {
+      var store = this._store;
+
+      if (radius <= 0) { return [store.getTileXYZ(this.x, this.y, this.z)]; }
+
+      var currentCubePos = store.getTileXYZ(
+        this.x + (NEIGHBOR_DELTAS[4][0] * radius),
+        this.y + (NEIGHBOR_DELTAS[4][1] * radius),
+        this.z + (NEIGHBOR_DELTAS[4][2] * radius)
+      );
+
+      var results = [];
+      for (var i = 0; i < 6; i++) {
+        for (var j = 0; j < radius; j++) {
+          if (!currentCubePos.isEmpty) {
+            results.push(currentCubePos);
+          }
+          currentCubePos = currentCubePos.getNeighbors()[i];
+        }
+      }
+
+      return results;
+    },
+
+    _onTap: function(e) {
+      var eventName = (this.isSkill) ? 'tile-skill' : 'tile-empty';
+
+      this.fire(eventName, {
+        i: this.i,
+        j: this.j,
+        tapEvent: e.detail
+      });
+
+      if (this.isSkill) {
+        page(this.route);
+      }
+    },
+
+    _widthChanged: function() {
+      var width = (Math.sqrt(3) / 2) * this.width;
+      this.style.width = isNaN(this.width) ? width : width + 'px';
+    },
+
+    _heightChanged: function() {
+      this.style.height = isNaN(this.height) ? this.height : this.height + 'px';
+    },
+
+    _colorChanged: function() {
+      d3.select(this.$.tile).select('g').select('#hexagon').style('fill', this.color);
+    },
+
+    _marginTopChanged: function() {
+      this.style.marginTop = '-' + this.marginTop + 'px';
+    },
+
+    disableLink: function() {
+      this.style.pointerEvents = 'none';
+      this.style.cursor = 'default';
+    },
+
+    enableLink: function() {
+      this.style.pointerEvents = 'auto';
+      this.style.cursor = 'pointer';
+    },
+
+    hide: function () {
+      this._hidden = true;
+    },
+
+    show: function () {
+      this._hidden = false;
+    }
+  });
 })();
 </script>
