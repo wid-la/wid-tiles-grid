@@ -64,7 +64,8 @@ Example:
               color="[[hex.color]]"
               width="[[tileWidth]]"
               height="[[tileHeight]]"
-              is-plain="[[hex.isPlain]]">
+              is-plain="[[hex.isPlain]]"
+              route-url="[[hex.routeUrl]]">
 
               <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
               <span>[[hex.name]]</span>
@@ -123,9 +124,9 @@ Example:
         value: false
       },
 
-      tileAnimatable: {
+      exitTileAnimatable: {
         type: Boolean,
-        value: true
+        value: false
       },
 
       tileAnimatableType: {
@@ -314,7 +315,7 @@ Example:
      * @return {{numberOfRows: Number, tilesPerRow: Number, emptiesBetweenPlain: Number, numberOfTiles: Number}} The grid parameters
      */
     _computeGridParameters: function () {
-      var numberOfRows = Math.floor(this._height / (this.tileHeight / 2)), //this is an upward estimation 
+      var numberOfRows = Math.floor(this._height / (this.tileHeight / 2)), //this is an upward estimation
           theoricTilesPerRow = Math.floor(this._width / this._tileRealWidth),
           tilesPerRow = [],
           numberOfTiles = 0, emptiesBetweenPlain,
@@ -380,7 +381,7 @@ Example:
           col: param.j,
           tilesSinceLastPlain: param.tilesSinceLastPlain
         })
-      }; 
+      };
     },
 
     /**
@@ -412,6 +413,7 @@ Example:
       tile.isPlain = true;
       tile.name = content.name;
       tile.image =  content.image;
+      tile.routeUrl = content.routeUrl;
 
       return tile;
     },
@@ -448,7 +450,7 @@ Example:
           }) && (currentTile < this.tiles.length)) {
 
             //workaround if the number total of tiles equals the number of plain tiles to insert
-            tilesSinceLastPlain = (gridParamters.emptiesBetweenPlain === 1) ? 1 : 0; 
+            tilesSinceLastPlain = (gridParamters.emptiesBetweenPlain === 1) ? 1 : 0;
             row.push(this._computePlainTileModel(this.tiles[currentTile], {
               i: i,
               j: j,
@@ -514,7 +516,7 @@ Example:
     /**
      * Configure and trigger the ripple animation if enabled.
      * Disable the tiles event during the animation.
-     * @param  {TileTapEvent} e Tile Tap Event. 
+     * @param  {TileTapEvent} e Tile Tap Event.
      */
     _onEmptyTileTap: function (e) {
       if (this.withRipple) {
@@ -537,19 +539,17 @@ Example:
      * Configure and trigger the ripple animation if enabled.
      * Set the current selected tile.
      * Update the exit animation to call the tile fade-out animation.
-     * @param  {TileTapEvent} e Tile Tap Event. 
+     * @param  {TileTapEvent} e Tile Tap Event.
      */
     _onPlainTileTap: function(e) {
       this._onEmptyTileTap(e);
-      
+
       this.currentTile = e.target;
       this.sharedElements = {
         'hero': e.target
       };
 
-      if (this.tileAnimatable) {
-        this._updateExitAnimation(this.currentTile);
-      }
+      this._updateExitAnimation(this.currentTile, this.exitTileAnimatable);
     },
 
     /**
@@ -574,13 +574,17 @@ Example:
      * Call the fade-out animation of the tile element.
      * @param  {Tile} tile Tile element with a fade-out animation.
      */
-    _updateExitAnimation: function (tile) {
-      this.animationConfig.exit = [this.animationConfig.exit[0]].concat({
-        animatable: tile,
-        type: this.tileAnimatableType
-      });
+    _updateExitAnimation: function (tile, useExitAnimation) {
+      this.animationConfig.exit = [this.animationConfig.exit[0]];
+
+      if (useExitAnimation) {
+        this.animationConfig.exit.concat({
+          animatable: tile,
+          type: this.tileAnimatableType
+        });
+      }
     },
-    
+
 
     /**
      * This function cache the DOM nodes into the the tiles Store.
