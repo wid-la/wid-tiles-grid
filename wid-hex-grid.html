@@ -65,7 +65,7 @@ Example:
               width="[[tileWidth]]"
               height="[[tileHeight]]"
               is-plain="[[hex.isPlain]]"
-              route-url="[[hex.routeUrl]]">
+              data-plain="[[hex]]">
 
               <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
               <span>[[hex.name]]</span>
@@ -104,6 +104,38 @@ Example:
 
     return array;
   };
+
+  if (!Object.assign) {
+    Object.defineProperty(Object, 'assign', {
+      enumerable: false,
+      configurable: true,
+      writable: true,
+      value: function(target) {
+        if (target === undefined || target === null) {
+          throw new TypeError('Cannot convert first argument to object');
+        }
+
+        var to = Object(target);
+        for (var i = 1; i < arguments.length; i++) {
+          var nextSource = arguments[i];
+          if (nextSource === undefined || nextSource === null) {
+            continue;
+          }
+          nextSource = Object(nextSource);
+
+          var keysArray = Object.keys(Object(nextSource));
+          for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+            var nextKey = keysArray[nextIndex];
+            var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+            if (desc !== undefined && desc.enumerable) {
+              to[nextKey] = nextSource[nextKey];
+            }
+          }
+        }
+        return to;
+      }
+    });
+  }
 
   Polymer({
     is: 'wid-hex-grid',
@@ -407,15 +439,10 @@ Example:
     * @return {PlainTile}       The empty tile model.
      */
     _computePlainTileModel: function (content, positionParams) {
-      var tile = this._computeEmptyTileModel(positionParams),
-          tileStyle = this._computeTileStyle(positionParams);
+      var tile = this._computeEmptyTileModel(positionParams);
 
       tile.isPlain = true;
-      tile.name = content.name;
-      tile.image =  content.image;
-      tile.routeUrl = content.routeUrl;
-
-      return tile;
+      return Object.assign(tile, content);
     },
 
     /**
@@ -484,10 +511,8 @@ Example:
      * It could only be enabled or disabled.
      * @param  {HexTileEvent} e An event emitted by a wid-hex-tile
      */
-    _configureRipple: function (e) {
+    _configureRipple: function (i, j) {
       var store = this.$.store,
-          i = e.detail.i,
-          j = e.detail.j,
           tile = store.getTileIJ(i, j),
           animationConfig = this.animationConfig['tile-ripple'] = [],
           nodes, radius = 0,
@@ -521,7 +546,7 @@ Example:
     _onEmptyTileTap: function (e) {
       if (this.withRipple) {
         this.async(function() {
-          this._configureRipple(e);
+          this._configureRipple(e.detail.i, e.detail.j);
           this._disableTilesEvent();
           this.playAnimation('tile-ripple');
         });
