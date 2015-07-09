@@ -1,6 +1,6 @@
 {
   "name": "wid-hex-grid",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "authors": [
     "Anonymous <anonymous@example.com>"
   ],
@@ -20,12 +20,12 @@
   ],
   "dependencies": {
     "polymer": "Polymer/polymer#~1.0.5",
-    "neon-animation": "hourliert/neon-animation#~1.0.7",
+    "neon-animation": "PolymerElements/neon-animation#~1.0.5",
     "web-animations-js": "2.1.0",
     "iron-image": "PolymerElements/iron-image#~1.0.2",
     "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#~1.0.2",
     "wid-d3-import": "wid-la/wid-d3-import#~1.0.0",
-    "wid-hex-tile": "wid-la/wid-hex-tile#~1.0.1"
+    "wid-hex-tile": "wid-la/wid-hex-tile#~1.0.3"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
