@@ -1,5 +1,6 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-image/iron-image.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
 <link rel="import" href="../neon-animation/neon-animation.html">
 <link rel="import" href="../neon-animation/neon-animations.html">
 
@@ -476,13 +477,12 @@ Example:
             emptiesBetweenPlain: gridParamters.emptiesBetweenPlain
           }) && (currentTile < this.tiles.length)) {
 
-            //workaround if the number total of tiles equals the number of plain tiles to insert
-            tilesSinceLastPlain = (gridParamters.emptiesBetweenPlain === 1) ? 1 : 0;
             row.push(this._computePlainTileModel(this.tiles[currentTile], {
               i: i,
               j: j,
-              tilesSinceLastPlain: tilesSinceLastPlain
+              tilesSinceLastPlain: 0
             }));
+            tilesSinceLastPlain = 1;
             currentTile++;
 
           } else {
