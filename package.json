@@ -2,18 +2,20 @@
   "name": "wid-hex-grid",
   "version": "1.0.4",
   "authors": [
-    "Anonymous <anonymous@example.com>"
+    "Thomas Hourlier <hourliert@gmail.com>"
   ],
   "description": "An element providing a solution to no problem in particular.",
   "keywords": [
     "web-component",
     "web-components",
     "polymer",
-    "seed"
+    "grid",
+    "tiles",
+    "hexagon"
   ],
   "main": "wid-hex-grid.html",
-  "license": "http://polymer.github.io/LICENSE.txt",
-  "homepage": "https://github.com/<USERNAME>/wid-hex-grid/",
+  "license": "MIT",
+  "homepage": "https://github.com/wid-la/wid-hex-grid",
   "ignore": [
     "/.*",
     "/test/",
@@ -28,6 +30,10 @@
     "browser-sync": "^2.7.6",
     "gulp": "^3.8.11",
     "gulp-bg": "0.0.5",
+    "gulp-bump": "^0.3.1",
+    "gulp-filter": "^2.0.2",
+    "gulp-git": "^1.2.4",
+    "gulp-tag-version": "^1.2.1",
     "polyserve": "^0.4.0",
     "ps-node": "0.0.4",
     "web-component-tester": "^3.1.4"
