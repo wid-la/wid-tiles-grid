@@ -42,10 +42,17 @@ Example:
       margin: 50px;
     }
 
+    #placeholder {
+      opacity: 0;
+      background-color: var(--interest-card-background-color, blue);
+    }
+
   </style>
   <template>
 
-    <wid-tiles-store id="store"></wid-tiles-store>
+    <wid-tiles-store type="[[type]]" id="store"></wid-tiles-store>
+
+    <div id="placeholder" class="fit"></div>
 
     <div id="tiles" class="layout vertical center-center">
 
@@ -190,10 +197,10 @@ Example:
               nodeDelay: 5
             },
 
-            'exit': [{
-              name: 'hero-animation',
-              id: 'hero',
-              fromPage: this
+            'entry': [{
+              name: 'reverse-ripple-animation',
+              id: 'reverse-ripple',
+              toPage: this
             }]
           };
         }
@@ -243,6 +250,16 @@ Example:
         type: Array,
         value: function() {
           return [];
+        }
+      },
+
+      sharedElements: {
+        type: Object,
+        value: function () {
+          return {
+            'ripple': this.$.placeholder,
+            'reverse-ripple': this.$.placeholder
+          };
         }
       },
 
@@ -320,6 +337,26 @@ Example:
     observers: [
       '_updateTiles(_width, _height, tiles)'
     ],
+
+    attached: function () {
+      this.animationConfig.exit = (this.type === 'hexagon') ?
+      ([{
+        name: 'hero-animation',
+        id: 'hero',
+        fromPage: this
+      }]) : ([{
+        name: 'fade-out-animation',
+        node: this.$.tiles,
+        timing: {
+          delay: 150,
+          duration: 0
+        }
+      }, {
+        name: 'ripple-animation',
+        id: 'ripple',
+        fromPage: this
+      }]);
+    },
 
     /**
      * Called whenever the window is resized.
@@ -582,9 +619,14 @@ Example:
       this._onEmptyTileTap(e);
 
       this.currentTile = e.target;
-      this.sharedElements = {
+
+      this.sharedElements = (this.type === 'hexagon') ?
+      ({
         'hero': e.target
-      };
+      }) : ({
+        'ripple': event.target,
+        'reverse-ripple': event.target
+      });
 
       this._updateExitAnimation(this.currentTile, this.exitTileAnimatable);
     },
@@ -612,7 +654,7 @@ Example:
      * @param  {Tile} tile Tile element with a fade-out animation.
      */
     _updateExitAnimation: function (tile, useExitAnimation) {
-      this.animationConfig.exit = [this.animationConfig.exit[0]];
+      this.animationConfig.exit = (this.type === 'hexagon') ? [this.animationConfig.exit[0]] : [this.animationConfig.exit[0], this.animationConfig.exit[1]];
 
       if (useExitAnimation) {
         this.animationConfig.exit.concat({
