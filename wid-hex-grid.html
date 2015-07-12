@@ -5,8 +5,8 @@
 <link rel="import" href="../neon-animation/neon-animations.html">
 
 <link rel="import" href="../wid-d3-import/wid-d3-import.html">
-<link rel="import" href="../wid-hex-tile/wid-hex-tile.html">
-<link rel="import" href="../wid-hex-tile/wid-tiles-store.html">
+<link rel="import" href="../wid-tile/wid-tile.html">
+<link rel="import" href="../wid-tile/wid-tiles-store.html">
 
 <link rel="import" href="fill-inout-animation.html">
 
@@ -55,7 +55,8 @@ Example:
 
           <template is="dom-repeat" items="[[row]]" as="hex">
 
-            <wid-hex-tile
+            <wid-tile
+              type="hexagon"
               margin-top="[[hex.marginTop]]"
               x="[[hex.x]]"
               y="[[hex.y]]"
@@ -71,7 +72,7 @@ Example:
               <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
               <span>[[hex.name]]</span>
 
-            </wid-hex-tile>
+            </wid-tile>
 
           </template>
 
