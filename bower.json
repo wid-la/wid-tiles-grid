@@ -1,10 +1,10 @@
 {
-  "name": "wid-hex-grid",
+  "name": "wid-tiles-grid",
   "version": "1.0.7",
   "authors": [
     "Thomas Hourlier <hourliert@gmail.com>"
   ],
-  "description": "An element providing a solution to no problem in particular.",
+  "description": "An element that display a grid of tiles.",
   "keywords": [
     "web-component",
     "web-components",
@@ -13,9 +13,9 @@
     "tiles",
     "hexagon"
   ],
-  "main": "wid-hex-grid.html",
+  "main": "wid-tiles-grid.html",
   "license": "MIT",
-  "homepage": "https://github.com/wid-la/wid-hex-grid",
+  "homepage": "https://github.com/wid-la/wid-tiles-grid",
   "ignore": [
     "/.*",
     "/test/",

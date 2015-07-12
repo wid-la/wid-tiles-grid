@@ -13,24 +13,24 @@
 
 
 <!--
-An element that display a grid of hexagonal tiles. Some tiles could be plain or empty
+An element that display a grid of tiles. Some tiles could be plain or empty
 depending on the `tiles` configuration.
 The width and height of this component MUST be set via CSS properties.
 
 Example:
 
 ```
-  <wid-hex-grid
+  <wid-tiles-grid
     tiles="[[tiles]]">
-  </wid-hex-grid>
+  </wid-tiles-grid>
 ```
 
 @group Wid
-@element wid-hex-grid
+@element wid-tiles-grid
 @demo demo/index.html
 @hero hero.svg
 -->
-<dom-module id="wid-hex-grid">
+<dom-module id="wid-tiles-grid">
   <style>
 
     :host {
@@ -53,25 +53,25 @@ Example:
 
         <div class="row layout horizontal center-center">
 
-          <template is="dom-repeat" items="[[row]]" as="hex">
+          <template is="dom-repeat" items="[[row]]" as="tile">
 
             <wid-tile
               type="[[type]]"
               margin="[[marginBetweenTiles]]"
-              margin-top="[[hex.marginTop]]"
-              x="[[hex.x]]"
-              y="[[hex.y]]"
-              z="[[hex.z]]"
-              i="[[hex.i]]"
-              j="[[hex.j]]"
-              color="[[hex.color]]"
+              margin-top="[[tile.marginTop]]"
+              x="[[tile.x]]"
+              y="[[tile.y]]"
+              z="[[tile.z]]"
+              i="[[tile.i]]"
+              j="[[tile.j]]"
+              color="[[tile.color]]"
               width="[[tileWidth]]"
               height="[[tileHeight]]"
-              is-plain="[[hex.isPlain]]"
-              data-plain="[[hex]]">
+              is-plain="[[tile.isPlain]]"
+              data-plain="[[tile]]">
 
-              <iron-image src$="[[hex.image]]" sizing="contain"></iron-image>
-              <span>[[hex.name]]</span>
+              <iron-image src$="[[tile.image]]" sizing="contain"></iron-image>
+              <span>[[tile.name]]</span>
 
             </wid-tile>
 
@@ -141,7 +141,7 @@ Example:
   }
 
   Polymer({
-    is: 'wid-hex-grid',
+    is: 'wid-tiles-grid',
 
     behaviors: [
       Polymer.IronResizableBehavior,
@@ -313,8 +313,8 @@ Example:
       'dom-change': '_onDomChange',
       'iron-resize': '_onIronResize',
       'neon-animation-finish': '_onNeonAnimationFinish',
-      'hex-tile-tap-plain': '_onPlainTileTap',
-      'hex-tile-tap-empty': '_onEmptyTileTap'
+      'tile-tap-plain': '_onPlainTileTap',
+      'tile-tap-empty': '_onEmptyTileTap'
     },
 
     observers: [
@@ -334,18 +334,18 @@ Example:
     },
 
     /**
-     * Compute the exact size of the hexagonal grid based on the
+     * Compute the exact size of the grid based on the
      * number of rows and the tile height.
-     * @param  {Number} numberOfRows Number of rows in the hexagonal grid
-     * @return {Number}              Exact size of the hexagonal grid
+     * @param  {Number} numberOfRows Number of rows in the grid
+     * @return {Number}              Exact size of the grid
      */
     _getTilesHeight: function (numberOfRows) {
       return (3 / 4 * numberOfRows + 1 / 4) * this.tileHeight;
     },
 
     /**
-     * Compute the width of an hexagonal tile based on the desired width `tileWidth`
-     * @return {Number} The width of an hexagonal tile.
+     * Compute the width of a tile based on the desired width `tileWidth`
+     * @return {Number} The width of a tile.
      */
     _tileWidthChanged: function () {
       this._tileRealWidth = (this.type === 'hexagon') ? (Math.floor((Math.sqrt(3) / 2) * this.tileWidth)) : this.tileWidth;
@@ -354,7 +354,7 @@ Example:
 
 
     /**
-     * Compute the hexagonal parameters based on the height and width of this component, the tile height, the real tile width
+     * Compute the grid parameters based on the height and width of this component, the tile height, the real tile width
      * and the number of plain tiles.
      * @return {{numberOfRows: Number, tilesPerRow: Number, emptiesBetweenPlain: Number, numberOfTiles: Number}} The grid parameters
      */
@@ -459,11 +459,11 @@ Example:
     },
 
     /**
-     * Update the hexagonal grid model. This is trigger whenever the size of the component change or the
+     * Update the grid model. This is trigger whenever the size of the component change or the
      * `tiles` property change.
      * @param  {Number} width  Width of the component
      * @param  {Number} height Height of the component
-     * @return {HexGrid}        The grid model.
+     * @return {Grid}        The grid model.
      */
     _updateTiles: function(width, height) {
       if (!width || !height) {
@@ -521,7 +521,7 @@ Example:
      * Configure the tile ripple animation. This animation is not configurable.
      * This ripple propagates through tile's neighbors.
      * It could only be enabled or disabled.
-     * @param  {HexTileEvent} e An event emitted by a wid-hex-tile
+     * @param  {TileEvent} e An event emitted by a wid-tile
      */
     _configureRipple: function (i, j) {
       var store = this.$.store,
@@ -529,7 +529,7 @@ Example:
           animationConfig = this.animationConfig['tile-ripple'] = [],
           nodes, radius = 0,
           getSVGPath = function (t) {
-            return t.$.hexagon;
+            return t.$.shape;
           };
 
       while ((nodes = tile.getRing(radius)).length) {
@@ -628,7 +628,7 @@ Example:
      */
     _onDomChange: function() {
       var store = this.$.store,
-          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('wid-hex-tile');
+          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('wid-tile');
 
       tiles.forEach(function (tile) {
         store.addTile(tile);
