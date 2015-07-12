@@ -56,7 +56,8 @@ Example:
           <template is="dom-repeat" items="[[row]]" as="hex">
 
             <wid-tile
-              type="hexagon"
+              type="[[type]]"
+              margin="[[marginBetweenTiles]]"
               margin-top="[[hex.marginTop]]"
               x="[[hex.x]]"
               y="[[hex.y]]"
@@ -149,6 +150,10 @@ Example:
     ],
 
     properties: {
+      type: {
+        type: String,
+        value: 'circle'
+      },
       /**
        * Enable/Disable the tile ripple animation.
        * @type {Boolean}
@@ -192,6 +197,11 @@ Example:
             }]
           };
         }
+      },
+
+      marginBetweenTiles: {
+        type: Number,
+        value: 1
       },
 
       _width: {
@@ -338,7 +348,7 @@ Example:
      * @return {Number} The width of an hexagonal tile.
      */
     _tileWidthChanged: function () {
-      this._tileRealWidth = Math.floor((Math.sqrt(3) / 2) * this.tileWidth);
+      this._tileRealWidth = (this.type === 'hexagon') ? (Math.floor((Math.sqrt(3) / 2) * this.tileWidth)) : this.tileWidth;
       return this._tileRealWidth;
     },
 
@@ -408,8 +418,9 @@ Example:
      * @return {{marginTop: Number}}      The tile margin top.
      */
     _computeTileStyle: function (param) {
+      var ratio = (this.type === 'hexagon') ? 4 : 8;
       return {
-        marginTop: ((param.i > 0) ? this.tileHeight / 4 : 0), //except the first row, other have a margin-top
+        marginTop: ((param.i > 0) ? this.tileHeight / ratio : 0), //except the first row, other have a margin-top
         fillColor: this.tileColorPicker({
           row: param.i,
           col: param.j,
