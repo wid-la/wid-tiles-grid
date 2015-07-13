@@ -7,6 +7,8 @@
 <link rel="import" href="../wid-d3-import/wid-d3-import.html">
 <link rel="import" href="../wid-tile/wid-tile.html">
 <link rel="import" href="../wid-tile/wid-tiles-store.html">
+<link rel="import" href="../wid-ripple-transition-behavior/wid-ripple-transition-behavior.html">
+<link rel="import" href="../wid-hero-transition-behavior/wid-hero-transition-behavior.html">
 
 <link rel="import" href="fill-inout-animation.html">
 
@@ -54,7 +56,7 @@ Example:
 
     <div id="placeholder" class="fit"></div>
 
-    <div id="tiles" class="layout vertical center-center">
+    <div id="content" class="layout vertical center-center">
 
       <template is="dom-repeat" items="[[_tilesModel]]" as="row">
 
@@ -93,70 +95,25 @@ Example:
   </template>
 </dom-module>
 
+<<script src="utils.js" type="text/javascript"></script>
 <script>
 (function() {
-
-  var shuffleArray = function (array){
-    var currentIndex = array.length, temporaryValue, randomIndex ;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
-    }
-
-    return array;
-  };
-
-  if (!Object.assign) {
-    Object.defineProperty(Object, 'assign', {
-      enumerable: false,
-      configurable: true,
-      writable: true,
-      value: function(target) {
-        if (target === undefined || target === null) {
-          throw new TypeError('Cannot convert first argument to object');
-        }
-
-        var to = Object(target);
-        for (var i = 1; i < arguments.length; i++) {
-          var nextSource = arguments[i];
-          if (nextSource === undefined || nextSource === null) {
-            continue;
-          }
-          nextSource = Object(nextSource);
-
-          var keysArray = Object.keys(Object(nextSource));
-          for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
-            var nextKey = keysArray[nextIndex];
-            var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-            if (desc !== undefined && desc.enumerable) {
-              to[nextKey] = nextSource[nextKey];
-            }
-          }
-        }
-        return to;
-      }
-    });
-  }
-
   Polymer({
     is: 'wid-tiles-grid',
 
     behaviors: [
       Polymer.IronResizableBehavior,
       Polymer.NeonAnimationRunnerBehavior,
-      Polymer.NeonSharedElementAnimatableBehavior
+      Polymer.WidRippleTransitionBehavior,
+      Polymer.WidHeroTransitionBehavior
     ],
 
     properties: {
+      transitionType: {
+        type: String,
+        value: 'hero'
+      },
+
       type: {
         type: String,
         value: 'circle'
@@ -195,13 +152,13 @@ Example:
               animation: 'slide-down-animation',
               nodes: [],
               nodeDelay: 5
-            },
+            }
 
-            'entry': [{
-              name: 'reverse-ripple-animation',
-              id: 'reverse-ripple',
-              toPage: this
-            }]
+            // 'entry': [{
+            //   name: 'reverse-ripple-animation',
+            //   id: 'reverse-ripple',
+            //   toPage: this
+            // }]
           };
         }
       },
@@ -338,26 +295,6 @@ Example:
       '_updateTiles(_width, _height, tiles)'
     ],
 
-    attached: function () {
-      this.animationConfig.exit = (this.type === 'hexagon') ?
-      ([{
-        name: 'hero-animation',
-        id: 'hero',
-        fromPage: this
-      }]) : ([{
-        name: 'fade-out-animation',
-        node: this.$.tiles,
-        timing: {
-          delay: 150,
-          duration: 0
-        }
-      }, {
-        name: 'ripple-animation',
-        id: 'ripple',
-        fromPage: this
-      }]);
-    },
-
     /**
      * Called whenever the window is resized.
      * Get the size of this component.
@@ -377,7 +314,8 @@ Example:
      * @return {Number}              Exact size of the grid
      */
     _getTilesHeight: function (numberOfRows) {
-      return (3 / 4 * numberOfRows + 1 / 4) * this.tileHeight;
+      var ratio = (this.type === 'hexagon') ? 4 : 8;
+      return ((ratio - 1) / ratio * numberOfRows + 1 / ratio) * this.tileHeight;
     },
 
     /**
@@ -620,13 +558,11 @@ Example:
 
       this.currentTile = e.target;
 
-      this.sharedElements = (this.type === 'hexagon') ?
-      ({
-        'hero': e.target
-      }) : ({
+      this.sharedElements = {
+        'hero': e.target,
         'ripple': event.target,
         'reverse-ripple': event.target
-      });
+      };
 
       this._updateExitAnimation(this.currentTile, this.exitTileAnimatable);
     },
@@ -654,7 +590,11 @@ Example:
      * @param  {Tile} tile Tile element with a fade-out animation.
      */
     _updateExitAnimation: function (tile, useExitAnimation) {
-      this.animationConfig.exit = (this.type === 'hexagon') ? [this.animationConfig.exit[0]] : [this.animationConfig.exit[0], this.animationConfig.exit[1]];
+      if (this.transitionType === 'ripple') {
+        this.animationConfig.exit = this._fromRippleTransitionAnimation.exit;
+      } else {
+        this.animationConfig.exit = [this.animationConfig.exit[0]];
+      }
 
       if (useExitAnimation) {
         this.animationConfig.exit.concat({

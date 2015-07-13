@@ -27,7 +27,9 @@
     "iron-image": "PolymerElements/iron-image#~1.0.2",
     "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#~1.0.2",
     "wid-d3-import": "wid-la/wid-d3-import#~1.0.0",
-    "wid-tile": "wid-la/wid-tile#~1.1.0"
+    "wid-tile": "wid-la/wid-tile#~1.1.0",
+    "wid-ripple-transition-behavior": "wid-la/wid-ripple-transition-behavior#~1.0.1",
+    "wid-hero-transition-behavior": "wid-la/wid-hero-transition-behavior#~1.0.1"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
