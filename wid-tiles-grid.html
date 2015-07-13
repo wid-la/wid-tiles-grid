@@ -13,7 +13,6 @@
 <link rel="import" href="fill-inout-animation.html">
 
 
-
 <!--
 An element that display a grid of tiles. Some tiles could be plain or empty
 depending on the `tiles` configuration.
@@ -52,7 +51,7 @@ Example:
   </style>
   <template>
 
-    <wid-tiles-store type="[[type]]" id="store"></wid-tiles-store>
+    <wid-tiles-store type="[[shapeType]]" id="store"></wid-tiles-store>
 
     <div id="placeholder" class="fit"></div>
 
@@ -65,7 +64,7 @@ Example:
           <template is="dom-repeat" items="[[row]]" as="tile">
 
             <wid-tile
-              type="[[type]]"
+              type="[[shapeType]]"
               margin="[[marginBetweenTiles]]"
               margin-top="[[tile.marginTop]]"
               x="[[tile.x]]"
@@ -109,104 +108,160 @@ Example:
     ],
 
     properties: {
-      transitionType: {
-        type: String,
-        value: 'hero'
-      },
 
-      type: {
+      /**
+       * Define the shape of the tile.
+       * It MUST be whether 'hexagon' or 'circle'. This is the two official supported shapes.
+       * @type {String}
+       */
+      shapeType: {
         type: String,
         value: 'circle'
       },
+
       /**
-       * Enable/Disable the tile ripple animation.
+       * Enable/Disable the wave animation.
+       * This animation starts from the tile clicked an is propagated to its neighbors.
        * @type {Boolean}
        */
-      withRipple: {
+      withWave: {
         type: Boolean,
         value: false
       },
 
+      /**
+       * The depth of the waves.
+       * By default, the wave propagates thourgh 6 neighbors.
+       * @type {Number}
+       */
+      waveDepth: {
+        type: Number,
+        value: 6
+      },
+
+      /**
+       * Whether enable or disable an delegated animation on the current selected tile.
+       * @type {Boolean}
+       */
       exitTileAnimatable: {
         type: Boolean,
         value: false
       },
 
+      /**
+       * The name of the delegated animation.
+       * This property is useless until `exitTileAnimatable` is true.
+       * @type {String}
+       */
       tileAnimatableType: {
         type: String,
         value: 'fade-out'
       },
 
+      /**
+       * The current selected tile.
+       * @type {Tile}
+       */
       currentTile: {
         type: Object,
         notify: true
       },
 
-      animationConfig: {
-        value: function() {
-          return {
-            'tile-ripple': [],
-
-            'tiles-waterfall': {
-              name: 'cascaded-animation',
-              animation: 'slide-down-animation',
-              nodes: [],
-              nodeDelay: 5
-            }
-
-            // 'entry': [{
-            //   name: 'reverse-ripple-animation',
-            //   id: 'reverse-ripple',
-            //   toPage: this
-            // }]
-          };
-        }
-      },
-
+      /**
+       * The margin between each tile.
+       * @type {Number}
+       */
       marginBetweenTiles: {
         type: Number,
         value: 1
       },
 
-      _width: {
-        type: Number
-      },
-
-      _height: {
-        type: Number
-      },
-
-      _rowMarginTop: {
-        type: Number
-      },
-
+      /**
+       * The desired tile width.
+       * Depending on the shape selected, this width could be recomputed.
+       * For instance, if the shape is hexagon, the real tile width will be smaller than this because you know, 
+       * a flat topped hexagon is not a square!
+       * @type {Number}
+       */
       tileWidth: {
         type: Number,
         value: 125,
         observer: '_tileWidthChanged'
       },
 
-      _tileRealWidth: {
-        type: Number
-      },
-
+      /**
+       * The desired tile height.
+       * @type {Number}
+       */
       tileHeight: {
         type: Number,
         value: 125
       },
 
+      /**
+       * The actual width of the grid.
+       * Recompute on resize.
+       * @type {Number}
+       */
+      _width: {
+        type: Number
+      },
+
+      /**
+       * The actual height of the grid.
+       * Recompute on resize.
+       * @type {Number}
+       */
+      _height: {
+        type: Number
+      },
+
+      /**
+       * The real tile width.
+       * @type {Number}
+       */
+      _tileRealWidth: {
+        type: Number
+      },
+
+      /**
+       * The grid model use to render the view.
+       * @type {[Tile]}
+       */
       _tilesModel: {
         type: Array
       },
 
+      /**
+       * The actual tile `HTMLElements`.
+       * They are stored in this variable only for optimization.
+       * @type {[HTMLElement <wid-tile>]}
+       */
       _tiles: {
         type: Array
       },
 
+      /**
+       * Represent the data that will be inserted in the grid. 
+       * @type {[Tile]}
+       */
       tiles: {
         type: Array,
         value: function() {
           return [];
+        }
+      },
+
+      animationConfig: {
+        value: function() {
+          return {
+            'tiles-waterfall': {
+              name: 'cascaded-animation',
+              animation: 'slide-down-animation',
+              nodes: [],
+              nodeDelay: 5
+            }
+          };
         }
       },
 
@@ -220,6 +275,12 @@ Example:
         }
       },
 
+      /**
+       * An array of colors.
+       * These colors will be used to render the grid.
+       * By default, we use d3 to create a palette.
+       * @type {[String]}
+       */
       tilesColors: {
         type: Array,
         value: function () {
@@ -236,6 +297,13 @@ Example:
         }
       },
 
+      /**
+       * A function that is used to decide what color to use to color a tile.
+       * This function will received as parameter an object: `{tilesSinceLastPlain: Number}`. This object attribute
+       * is the number of empty tiles processed since the last data tile processed.
+       * By default we alternate colors from `tilesColors` array and use the first color of the array to color a data tile.
+       * @type {Function}
+       */
       tileColorPicker: {
         type: Object,
         value: function () {
@@ -246,6 +314,11 @@ Example:
         }
       },
 
+      /**
+       * An array of colors used to color the wave.
+       * By default, we use d3 to create a palette. 
+       * @type {[String]}
+       */
       rippleColors: {
         type: Array,
         value: function () {
@@ -262,6 +335,11 @@ Example:
         }
       },
 
+      /**
+       * A function used to choose which color use to color a ring of the wave depending on the radius of the wave.
+       * A radius parameter will be passed to this function. This parameter is the current radius of the wave.
+       * @type {Function}
+       */
       rippleColorPicker: {
         type: Object,
         value: function () {
@@ -271,8 +349,12 @@ Example:
         }
       },
 
-
-
+      /**
+       * This function is used to chosse when to insert a plain or an empty tile in the grid.
+       * By default we insert a tile every `emptiesBetweenPlain` tiles.
+       * An object with these parameters: `{tilesSinceLastPlain: Number, emptiesBetweenPlain: Number}` will be passed to this function.
+       * @type {Function}
+       */
       plainTileInsertionChooser: {
         type: Object,
         value: function() {
@@ -314,7 +396,7 @@ Example:
      * @return {Number}              Exact size of the grid
      */
     _getTilesHeight: function (numberOfRows) {
-      var ratio = (this.type === 'hexagon') ? 4 : 8;
+      var ratio = (this.shapeType === 'hexagon') ? 4 : 8;
       return ((ratio - 1) / ratio * numberOfRows + 1 / ratio) * this.tileHeight;
     },
 
@@ -323,7 +405,7 @@ Example:
      * @return {Number} The width of a tile.
      */
     _tileWidthChanged: function () {
-      this._tileRealWidth = (this.type === 'hexagon') ? (Math.floor((Math.sqrt(3) / 2) * this.tileWidth)) : this.tileWidth;
+      this._tileRealWidth = (this.shapeType === 'hexagon') ? (Math.floor((Math.sqrt(3) / 2) * this.tileWidth)) : this.tileWidth;
       return this._tileRealWidth;
     },
 
@@ -393,7 +475,7 @@ Example:
      * @return {{marginTop: Number}}      The tile margin top.
      */
     _computeTileStyle: function (param) {
-      var ratio = (this.type === 'hexagon') ? 4 : 8;
+      var ratio = (this.shapeType === 'hexagon') ? 4 : 8;
       return {
         marginTop: ((param.i > 0) ? this.tileHeight / ratio : 0), //except the first row, other have a margin-top
         fillColor: this.tileColorPicker({
@@ -501,13 +583,13 @@ Example:
     _configureRipple: function (i, j) {
       var store = this.$.store,
           tile = store.getTileIJ(i, j),
-          animationConfig = this.animationConfig['tile-ripple'] = [],
+          animationConfig = this.animationConfig['tiles-ripple'] = [],
           nodes, radius = 0,
           getSVGPath = function (t) {
             return t.$.shape;
           };
 
-      while ((nodes = tile.getRing(radius)).length) {
+      while (radius < this.waveDepth && (nodes = tile.getRing(radius)).length) {
 
         animationConfig.push({
           name: 'cascaded-animation',
@@ -531,17 +613,17 @@ Example:
      * @param  {TileTapEvent} e Tile Tap Event.
      */
     _onEmptyTileTap: function (e) {
-      if (this.withRipple) {
+      if (this.withWave) {
         this.async(function() {
           this._configureRipple(e.detail.i, e.detail.j);
           this._disableTilesEvent();
-          this.playAnimation('tile-ripple');
+          this.playAnimation('tiles-ripple');
         });
       }
     },
 
     /**
-     * Enable the tiles event once the tile-ripple animation is finished.
+     * Enable the tiles event once the tiles-ripple animation is finished.
      */
     _onNeonAnimationFinish: function() {
       this._enableTilesEvent();
@@ -560,11 +642,11 @@ Example:
 
       this.sharedElements = {
         'hero': e.target,
-        'ripple': event.target,
-        'reverse-ripple': event.target
+        'ripple': e.target,
+        'reverse-ripple': e.target
       };
 
-      this._updateExitAnimation(this.currentTile, this.exitTileAnimatable);
+      this._updateExitAnimation();
     },
 
     /**
@@ -586,24 +668,39 @@ Example:
     },
 
     /**
-     * Call the fade-out animation of the tile element.
-     * @param  {Tile} tile Tile element with a fade-out animation.
+     * Configure the animationConfig to call the `tileAnimatableType` animation of the `currentTile`.
+     * This function does nothing if `exitTileAnimatable` is false
      */
-    _updateExitAnimation: function (tile, useExitAnimation) {
-      if (this.transitionType === 'ripple') {
-        this.animationConfig.exit = this._fromRippleTransitionAnimation.exit;
-      } else {
-        this.animationConfig.exit = [this.animationConfig.exit[0]];
-      }
+    _updateExitAnimation: function () {
+      if (this.currentTile && this.exitTileAnimatable && this.tileAnimatableType) {
 
-      if (useExitAnimation) {
-        this.animationConfig.exit.concat({
-          animatable: tile,
-          type: this.tileAnimatableType
-        });
+        var animation = {
+            animatable: this.currentTile,
+            type: this.tileAnimatableType
+          },
+          index = -1,
+          exitConfig = this.animationConfig.exit;
+
+        var findInsertionPoint = function(config, animation) {
+          var i, ii;
+          for (i = 0, ii = config.length; i < ii; i++) {
+            if (config[i].type === animation.type && config[i].animatable) {
+              return i;
+            }
+          }
+          return -1;
+        };
+
+        index = findInsertionPoint(exitConfig, animation);
+
+        if (index > -1) {
+          exitConfig[index] = animation;
+        } else {
+          exitConfig.push(animation);
+        }
+
       }
     },
-
 
     /**
      * This function cache the DOM nodes into the the tiles Store.
