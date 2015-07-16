@@ -37,6 +37,8 @@ Example:
     :host {
       display: block;
       height: 100%;
+      @apply(--layout-vertical);
+      @apply(--layout-center-center);
     }
 
     paper-dialog {
@@ -64,6 +66,7 @@ Example:
           <template is="dom-repeat" items="[[row]]" as="tile">
 
             <wid-tile
+              display-title-on-over
               type="[[shapeType]]"
               margin="[[marginBetweenTiles]]"
               margin-top="[[tile.marginTop]]"
@@ -78,7 +81,7 @@ Example:
               is-plain="[[tile.isPlain]]"
               data-plain="[[tile]]">
 
-              <iron-image src$="[[tile.image]]" sizing="contain"></iron-image>
+              <iron-image src$="[[tile.icon]]" sizing="contain"></iron-image>
               <span>[[tile.name]]</span>
 
             </wid-tile>
@@ -173,13 +176,13 @@ Example:
        */
       marginBetweenTiles: {
         type: Number,
-        value: 1
+        value: 0.5
       },
 
       /**
        * The desired tile width.
        * Depending on the shape selected, this width could be recomputed.
-       * For instance, if the shape is hexagon, the real tile width will be smaller than this because you know, 
+       * For instance, if the shape is hexagon, the real tile width will be smaller than this because you know,
        * a flat topped hexagon is not a square!
        * @type {Number}
        */
@@ -242,7 +245,7 @@ Example:
       },
 
       /**
-       * Represent the data that will be inserted in the grid. 
+       * Represent the data that will be inserted in the grid.
        * @type {[Tile]}
        */
       tiles: {
@@ -287,7 +290,7 @@ Example:
           var numberOfColors = 10,
               color = d3.scale.linear()
                 .domain([0, numberOfColors])
-                .range(['lightskyblue', 'azure']),
+                .range(['Gainsboro', 'WhiteSmoke']),
               result = [];
 
           for (var i = 0; i < numberOfColors; i++) {
@@ -316,7 +319,7 @@ Example:
 
       /**
        * An array of colors used to color the wave.
-       * By default, we use d3 to create a palette. 
+       * By default, we use d3 to create a palette.
        * @type {[String]}
        */
       rippleColors: {
@@ -511,6 +514,7 @@ Example:
     _computePlainTileModel: function (content, positionParams) {
       var tile = this._computeEmptyTileModel(positionParams);
 
+      tile.fillColor = content.color || tile.fillColor;
       tile.isPlain = true;
       return Object.assign(tile, content);
     },
@@ -542,6 +546,11 @@ Example:
 
           //check if we insert in the model a plain or a empty tile
           if (this.plainTileInsertionChooser({
+            i: i,
+            numberOfRows: ii,
+            j: j,
+            tilesPerRow: jj,
+            numberOfTiles: gridParamters.numberOfTiles,
             tilesSinceLastPlain: tilesSinceLastPlain,
             emptiesBetweenPlain: gridParamters.emptiesBetweenPlain
           }) && (currentTile < this.tiles.length)) {
