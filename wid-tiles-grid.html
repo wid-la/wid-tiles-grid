@@ -54,9 +54,7 @@ Example:
   <template>
 
     <wid-tiles-store type="[[shapeType]]" id="store"></wid-tiles-store>
-
     <div id="placeholder" class="fit"></div>
-
     <div id="content" class="layout vertical center-center">
 
       <template is="dom-repeat" items="[[_tilesModel]]" as="row">
@@ -111,6 +109,11 @@ Example:
     ],
 
     properties: {
+
+      oddrLayout: {
+        type: Boolean,
+        value: false
+      },
 
       displayTitleOnOver: {
         type: Boolean,
@@ -433,9 +436,17 @@ Example:
       //to respect the even-q layout, we remove one tile of each odd row
       for (i = 0, ii = numberOfRows; i < ii; i++) {
         if (i % 2 === 1) {
-          tilesPerRow.push(theoricTilesPerRow - 1);
+          if (this.oddrLayout) {
+            tilesPerRow.push(theoricTilesPerRow - 1);
+          } else {
+            tilesPerRow.push(theoricTilesPerRow);
+          }
         } else {
-          tilesPerRow.push(theoricTilesPerRow);
+          if (this.oddrLayout) {
+            tilesPerRow.push(theoricTilesPerRow);
+          } else {
+            tilesPerRow.push(theoricTilesPerRow - 1);
+          }
         }
       }
       while(this._getTilesHeight(numberOfRows) > this._height) { //we recompute the numberOfRows to be more accurate
