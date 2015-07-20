@@ -267,12 +267,29 @@ Example:
       animationConfig: {
         value: function() {
           return {
-            'tiles-waterfall': {
+            'tiles-waterfall-left': {
               name: 'cascaded-animation',
-              animation: 'slide-down-animation',
+              animation: 'slide-from-right-animation',
               nodes: [],
               nodeDelay: 5
-            }
+            },
+            'tiles-waterfall-right': {
+              name: 'cascaded-animation',
+              animation: 'slide-from-left-animation',
+              nodes: [],
+              nodeDelay: 5
+            },
+
+            'tiles-waterfall': [
+              {
+                animatable: this,
+                type: 'tiles-waterfall-left'
+              },
+              {
+                animatable: this,
+                type: 'tiles-waterfall-right'
+              }
+            ]
           };
         }
       },
@@ -388,6 +405,10 @@ Example:
     observers: [
       '_updateTiles(_width, _height, tiles)'
     ],
+
+    playEntryAnimation: function () {
+      this.playAnimation('tiles-waterfall');
+    },
 
     /**
      * Called whenever the window is resized.
@@ -733,13 +754,20 @@ Example:
      */
     _onDomChange: function() {
       var store = this.$.store,
-          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('wid-tile');
+          tiles = this._tiles = Polymer.dom(this.root).querySelectorAll('wid-tile'),
+          halfLength = Math.ceil(tiles.length / 6),
+          leftSide;
 
       tiles.forEach(function (tile) {
         store.addTile(tile);
       });
 
-      this.animationConfig['tiles-waterfall'].nodes = shuffleArray(tiles);
+      // tiles = shuffleArray(tiles);
+
+      leftSide = tiles.splice(0, halfLength);
+
+      this.animationConfig['tiles-waterfall-left'].nodes = leftSide;
+      this.animationConfig['tiles-waterfall-right'].nodes = tiles;
     }
   });
 })();
