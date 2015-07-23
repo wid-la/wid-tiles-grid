@@ -70,6 +70,10 @@ Example:
             <wid-tile
               display-title-on-over="[[displayTitleOnOver]]"
               type="[[shapeType]]"
+              pulse-faster-on-over="2"
+              pulse-animation="[[tile.pulse]]"
+              pulse-animation-steps="[[_computePulseSteps(shapeType)]]"
+              pulse-animation-timing="[[_computePulseTiming()]]"
               margin="[[marginBetweenTiles]]"
               margin-top="[[tile.marginTop]]"
               x="[[tile.x]]"
@@ -115,11 +119,20 @@ Example:
 
     properties: {
 
+      /**
+       * The grid layout.
+       * Whether oddr layout (true) or even-r layout (false)
+       * @type {Boolean}
+       */
       oddrLayout: {
         type: Boolean,
         value: false
       },
 
+      /**
+       * Whether display the tile title on overing.
+       * @type {Boolean}
+       */
       displayTitleOnOver: {
         type: Boolean,
         value: false
@@ -410,8 +423,29 @@ Example:
       '_updateTiles(_width, _height, tiles)'
     ],
 
-    playEntryAnimation: function () {
-      this.playAnimation('tiles-waterfall');
+    /**
+     * Compute the tiles pulse steps depending on the tile shape.
+     * @return {Object} The pulse steps configuration.
+     */
+    _computePulseSteps: function () {
+      return [
+        {opacity: '0.1', transform: 'scale(0)'},
+        {opacity: '0.35', transform: (this.shapeType === 'circle') ? 'scale(1)' : 'scale(0.7)'}
+      ];
+    },
+
+    /**
+     * Compute the tiles pulse timing depending on the tile shape.
+     * @return {Object} The pulse timing configuration.
+     */
+    _computePulseTiming: function () {
+      return {
+        direction: 'alternate',
+        duration: 800,
+        delay: Math.floor(Math.random() * 400) + 200,
+        iterations: Infinity,
+        easing: 'ease-in-out'
+      };
     },
 
     /**
