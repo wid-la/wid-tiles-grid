@@ -47,6 +47,7 @@ Example:
 
     #content {
       height: 100%;
+      opacity: 0;
     }
 
     #placeholder {
@@ -299,6 +300,10 @@ Example:
 
             'tiles-waterfall': [
               {
+                name: 'fade-in-animation',
+                node: this.$.content
+              },
+              {
                 animatable: this,
                 type: 'tiles-waterfall-left'
               },
@@ -408,6 +413,15 @@ Example:
             return (param.tilesSinceLastPlain === param.emptiesBetweenPlain);
           };
         }
+      },
+
+      /**
+       * Hide the grid by default.
+       * @type {Boolean}
+       */
+      hide: {
+        type: Boolean,
+        value: false
       }
     },
 
@@ -422,6 +436,26 @@ Example:
     observers: [
       '_updateTiles(_width, _height, tiles)'
     ],
+
+    attached: function () {
+      if (this.hide) {
+        this.hide();
+      }
+    },
+
+    /**
+     * Hide the grid.
+     */
+    hide: function () {
+      this.$.content.style.opacity = 0;
+    },
+
+    /**
+     * Show the grid.
+     */
+    show: function () {
+      this.$.content.style.opacity = 1;
+    },
 
     /**
      * Compute the tiles pulse steps depending on the tile shape.
@@ -702,7 +736,9 @@ Example:
         this.async(function() {
           this._configureRipple(e.detail.i, e.detail.j);
           this._disableTilesEvent();
-          this.playAnimation('tiles-ripple');
+          this.playAnimation('tiles-ripple', {
+            name: 'tiles-ripple'
+          });
         });
       }
     },
@@ -710,8 +746,12 @@ Example:
     /**
      * Enable the tiles event once the tiles-ripple animation is finished.
      */
-    _onNeonAnimationFinish: function() {
-      this._enableTilesEvent();
+    _onNeonAnimationFinish: function(e) {
+      if (e.detail.name === 'tiles-ripple') {
+        this._enableTilesEvent();
+      } else {
+        this.show();
+      }
     },
 
     /**
