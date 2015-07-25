@@ -45,14 +45,17 @@ Example:
       margin: 50px;
     }
 
+    .hidden {
+      opacity: 0 !important;
+    }
+
     #content {
       height: 100%;
-      opacity: 0;
+      opacity: 1;
     }
 
     #placeholder {
-      opacity: 0;
-      background-color: var(--interest-card-background-color, blue);
+      background-color: var(--wid-tiles-grid-background-color, white);
     }
 
   </style>
@@ -449,14 +452,18 @@ Example:
      * Hide the grid.
      */
     hide: function () {
-      this.$.content.style.opacity = 0;
+      this.async(function () {
+        this.$.content.classList.add('hidden');
+      });
     },
 
     /**
      * Show the grid.
      */
     show: function () {
-      this.$.content.style.opacity = 1;
+      this.async(function () {
+        this.$.content.classList.remove('hidden');
+      });
     },
 
     /**
