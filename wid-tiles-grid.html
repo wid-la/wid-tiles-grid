@@ -419,7 +419,7 @@ Example:
        * Hide the grid by default.
        * @type {Boolean}
        */
-      hide: {
+      hideOnStart: {
         type: Boolean,
         value: false
       }
@@ -438,8 +438,10 @@ Example:
     ],
 
     attached: function () {
-      if (this.hide) {
+      if (this.hideOnStart) {
         this.hide();
+      } else {
+        this.show();
       }
     },
 
